@@ -1,249 +1,144 @@
-package atlasadminserver
+package mapserver
 
 import (
 	"fmt"
 	"log"
-
-	"github.com/antihax/AtlasMap/internal/atlasdb"
-	"github.com/gorilla/sessions"
+	"os"
+	"regexp"
 
 	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/go-redis/redis"
+	gsr "gopkg.in/boj/redistore.v1"
 )
 
-// AtlasAdminServer provides administrative services to an Atlas Cluster over http
-type AtlasAdminServer struct {
+// MapServer provides administrative services to an Atlas Cluster over http
+type MapServer struct {
 	redisClient  *redis.Client
-	gameData     map[string]EntityInfo
-	gameDataLock sync.RWMutex
+	territoryURL string
+	globalAdmin  string
+	store        *gsr.RediStore
 
-	tribeData     map[string]map[string]string
-	tribeDataLock sync.RWMutex
-
-	playerData     map[string]map[string]string
-	playerDataLock sync.RWMutex
-
-	steamData     map[string]string
-	steamDataLock sync.RWMutex
-
-	config *Configuration
-
-	db *atlasdb.AtlasDB
-
-	store *sessions.FilesystemStore
+	eventHub *Hub
 }
 
-// NewAtlasAdminServer creates a new server
-func NewAtlasAdminServer() *AtlasAdminServer {
-	return &AtlasAdminServer{
-		gameData:   make(map[string]EntityInfo),
-		tribeData:  make(map[string]map[string]string),
-		playerData: make(map[string]map[string]string),
-		steamData:  make(map[string]string),
-	}
+// NewMapServer creates a new server
+func NewMapServer() *MapServer {
+	return &MapServer{eventHub: newHub()}
 }
 
-// EntityInfo record in redis.
-type EntityInfo struct {
-	EntityID                string
-	ParentEntityID          string
-	EntityType              string
-	EntitySubType           string
-	EntityName              string
-	TribeID                 string
-	ServerXRelativeLocation float64
-	ServerYRelativeLocation float64
-	ServerID                [2]uint16
-	LastUpdatedDBAt         uint64
-	NextAllowedUseTime      uint64
+func (s *MapServer) addHandler(uri string, handlerFunc http.HandlerFunc) {
+	http.Handle(uri, s.logMiddleware(handlerFunc))
 }
 
-// ServerLocation relative percentage to a specific server's origin.
-type ServerLocation struct {
-	ServerID                [2]uint16
-	ServerXRelativeLocation float64
-	ServerYRelativeLocation float64
+func (s *MapServer) addAuthHandler(uri string, handlerFunc http.HandlerFunc) {
+	http.Handle(uri, s.authenticatedEndpoint(s.logMiddleware(handlerFunc)))
+}
+
+func (s *MapServer) addAdminHandler(uri string, handlerFunc http.HandlerFunc) {
+	http.Handle(uri, s.adminEndpoint(s.logMiddleware(handlerFunc)))
 }
 
 // Run starts the server processing
-func (s *AtlasAdminServer) Run() error {
+func (s *MapServer) Run() error {
+	testNumeric := regexp.MustCompile("^[0-9]+$")
+	testAlphaNumeric := regexp.MustCompile("^[0-9a-zA-Z._-]+$")
 
-	// Load configuration from environment
-	if err := s.loadConfig(); err != nil {
-		return err
+	// Setup redis connection
+	s.redisClient = redis.NewClient(&redis.Options{
+		Addr:     getEnv("REDIS_ADDRESS", "localhost:6379"),
+		Password: getEnv("REDIS_PASSWORD", ""),
+	})
+
+	s.globalAdmin = getEnv("GLOBAL_ADMIN_STEAMID", "")
+	if !testNumeric.MatchString(s.globalAdmin) {
+		log.Fatal("Must have a valid SteamID set in GLOBAL_ADMIN_STEAMID environment variable")
 	}
 
-	s.store = sessions.NewFilesystemStore(s.config.SessionStore, []byte(s.config.SessionKey))
-	/*
-		// Setup redis connection
-		s.redisClient = redis.NewClient(&redis.Options{
-			Addr:     s.config.RedisAddress,
-			Password: s.config.RedisPassword,
-			DB:       s.config.RedisDB,
-		})
+	// Create a redis session store.
+	store, err := gsr.NewRediStore(10, "tcp", getEnv("REDIS_ADDRESS", "localhost:6379"), getEnv("REDIS_PASSWORD", ""), []byte(os.Getenv("COOKIE_SECRET")))
+	if err != nil {
+		log.Fatalf("Cannot build redis store: %v", err)
+	}
+	// Set options for the store
+	store.SetMaxLength(1024 * 100)
+	s.store = store
 
-		// Test connection
-		_, err := s.redisClient.Ping().Result()
-		if err != nil {
-			return err
-		}*/
-
-	// Setup our DB pool
-	db, err := atlasdb.NewAtlasDB(
-		s.config.AtlasRedisAddress,
-		s.config.AtlasRedisPassword,
-		s.config.AtlasRedisDB,
-	)
+	// Test connection
+	_, err = s.redisClient.Ping().Result()
 	if err != nil {
 		return err
 	}
-	s.db = db
-
-	// Poll the database for data
-	go s.fetch()
 
 	// Setup handlers
-	http.Handle("/gettribes", ourMiddleware(http.HandlerFunc(s.getTribes)))
-	http.Handle("/getdata", ourMiddleware(http.HandlerFunc(s.getData)))
-	http.Handle("/travels", ourMiddleware(http.HandlerFunc(s.getPathTravelled)))
-	http.Handle("/territoryURL", ourMiddleware(http.HandlerFunc(s.getTerritoryURL)))
-	http.Handle("/", http.FileServer(http.Dir(s.config.StaticDir)))
+	http.Handle("/", http.FileServer(http.Dir(getEnv("STATIC_DIR", "./www"))))
 
-	http.Handle("/login", ourMiddleware(http.HandlerFunc(s.loginHandler)))
-	http.Handle("/logout", ourMiddleware(http.HandlerFunc(s.logoutHandler)))
-	http.Handle("/account", ourMiddleware(http.HandlerFunc(s.accountHandler)))
+	s.addHandler("/login", s.loginHandler)
+	s.addHandler("/logout", s.logoutHandler)
 
-	// Don't serve command handler if disabled
-	if !s.config.DisableCommands {
-		http.HandleFunc("/command", s.sendCommand)
+	s.addAuthHandler("/account", s.accountHandler)
+	s.addAuthHandler("/events", s.streamEvents)
+
+	s.addAdminHandler("/listUsers", s.listUsers)
+	s.addAdminHandler("/changeUser", s.changeUser)
+
+	webhook := getEnv("WEBHOOK_KEY", "")
+	if !testAlphaNumeric.MatchString(webhook) {
+		log.Fatal("Webhook key is not valid. Must be alpha numeric")
 	}
+	s.addHandler("/"+webhook, http.HandlerFunc(s.webhookHandler))
 
-	endpoint := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
+	////////////////////////////
+	//	go s.fakePump()
+	////////////////////////////
+
+	go s.eventHub.run()
+	endpoint := fmt.Sprintf("%s:%s", getEnv("HOST", "localhost"), getEnv("PORT", "8000"))
 	log.Println("Listening on ", endpoint)
 	return http.ListenAndServe(endpoint, nil)
 }
 
-func (s *AtlasAdminServer) fetch() {
-	kidsWithBadParents := make(map[string]bool)
-	throttle := time.NewTicker(time.Duration(s.config.FetchRateInSeconds) * time.Second)
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
 
+/*
+func (s *MapServer) fakePump() {
+	timer := time.Tick(time.Millisecond * 250)
+	var stuff = `{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 15:44:35", "content": "Someone was promoted to a Company Admin by Someone!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:10:02", "content": "Crew member Someone - Lvl 31 was killed!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:13:01", "content": "Someone demolished a 'Wood Roof' at N6 [Long: 81.10 / Lat: 28.25]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 16:51:20", "content": "Crew member Someone - Lvl 1 was killed!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 17:34:01", "content": "Crew member Someone - Lvl 27 was killed!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 15:40:22", "content": "Crew member Someone - Lvl 30 was killed!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 15:52:01", "content": "Crew member Someone - Lvl 33 was killed!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 15:58:37", "content": "Crew member Someone - Lvl 19 was killed by a Rhino - Lvl 19!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 16:00:13", "content": "Crew member Someone - Lvl 12 was killed by a Rhino - Lvl 19!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 23:15:15", "content": "Bed 234234234234 was added to the Company!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 23:16:48", "content": "Someone demolished a 'Bed' at N6 [Long: 81.51 / Lat: 28.11]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 23:16:55", "content": "Bed -234234234234 was removed from the Company!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 23:20:29", "content": "Someone demolished a 'PillarTop (Bed)' at N6 [Long: 81.51 / Lat: 28.12]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 23:20:36", "content": "Bed 234234234234 was removed from the Company!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 19:16:45", "content": "Someone demolished a 'Wood Doorway' at J5 [Long: 24.89 / Lat: 37.40]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 19:18:14", "content": "Someone demolished a 'Wood Wall' at J5 [Long: 24.89 / Lat: 37.40]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 19:21:38", "content": "Someone Tamed a Rhino - Lvl 27 (Rhino)!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:19:46", "content": "Someone demolished a 'Wood Doorway' at J5 [Long: 24.89 / Lat: 37.42]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:21:51", "content": "Someone demolished a 'Wood Doorway' at J5 [Long: 24.89 / Lat: 37.41]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:28:16", "content": "Someone demolished a 'Wood Doorway' at J5 [Long: 24.89 / Lat: 37.41]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 36, 20:30:07", "content": "Someone demolished a 'Wood Doorway' at J5 [Long: 24.89 / Lat: 37.42]!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 37, 01:39:50", "content": "Someone Recruited Bearded John the Wanderer - Lvl 1 (Crewmember)!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 37, 01:40:44", "content": "Someone Recruited Old Joe Silver - Lvl 1 (Crewmember)!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 37, 01:41:09", "content": "Someone Recruited Angry Alex the Wanderer - Lvl 1 (Crewmember)!"}
+{"tribe": "SomeDudes", "tribeID": 1234567893, "time": 123123123, "atlasTime": "Day 37, 01:41:30", "content": "Someone Recruited Pretty Alex Senior - Lvl 1 (Crewmember)!"}
+`
+	messages := strings.Split(stuff, "\n")
+	len := len(messages)
 	for {
-		entities := make(map[string]EntityInfo)
-
-		// Get all tribe information
-		tribes, err := s.db.GetAllTribes()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		s.tribeDataLock.Lock()
-		s.tribeData = tribes
-		s.tribeDataLock.Unlock()
-
-		// Get the steamID=>playerID lookup
-		steamData, err := s.db.GetReverseSteamIDMap()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		s.steamDataLock.Lock()
-		s.steamData = steamData
-		s.steamDataLock.Unlock()
-
-		// Get player data
-		playerData, err := s.db.GetAllPlayers()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		s.playerDataLock.Lock()
-		s.playerData = playerData
-		s.playerDataLock.Unlock()
-
-		// Get all beds and ships
-		e, err := s.db.GetAllEntities()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		for _, record := range e {
-			info := newEntityInfo(record)
-			entities[info.EntityID] = *info
-		}
-
-		// sanity check entity data, e.g. any missing parent ids?
-		for k, v := range entities {
-			if v.ParentEntityID != "0" {
-				if _, parentFound := entities[v.ParentEntityID]; !parentFound {
-					if _, dontSpamLog := kidsWithBadParents[k]; !dontSpamLog {
-						kidsWithBadParents[k] = true
-					}
-					delete(entities, k)
-				}
-			}
-		}
-		s.gameDataLock.Lock()
-		s.gameData = entities
-		s.gameDataLock.Unlock()
-
-		<-throttle.C
+		s.eventHub.broadcast <- []byte(messages[rand.Intn(len)])
+		<-timer
 	}
 }
-
-// newEntityInfo transforms a Key-Value record into a new EntityInfo object.
-func newEntityInfo(record map[string]string) *EntityInfo {
-	var info EntityInfo
-	info.EntityID = record["EntityID"]
-	info.ParentEntityID = record["ParentEntityID"]
-	info.EntityName = record["EntityName"]
-	info.EntityType = record["EntityType"]
-	info.ServerXRelativeLocation, _ = strconv.ParseFloat(record["ServerXRelativeLocation"], 64)
-	info.ServerYRelativeLocation, _ = strconv.ParseFloat(record["ServerYRelativeLocation"], 64)
-	info.LastUpdatedDBAt, _ = strconv.ParseUint(record["LastUpdatedDBAt"], 10, 64)
-	info.NextAllowedUseTime, _ = strconv.ParseUint(record["NextAllowedUseTime"], 10, 64)
-
-	var ok bool
-	var tmpTribeID string
-	if tmpTribeID, ok = record["TribeID"]; !ok {
-		tmpTribeID = record["TribeId"]
-	}
-	info.TribeID = tmpTribeID
-
-	var tmpServerID string
-	if tmpServerID, ok = record["ServerID"]; !ok {
-		tmpServerID = record["ServerId"]
-	}
-	info.ServerID, _ = atlasdb.ServerID(tmpServerID)
-
-	// convert entity class to a subtype
-	var tmpEntityClass string
-	if tmpEntityClass, ok = record["EntityClass"]; !ok {
-		tmpEntityClass = "none"
-	}
-	tmpEntityClass = strings.ToLower(tmpEntityClass)
-	if strings.Contains(tmpEntityClass, "none") {
-		info.EntitySubType = "None"
-	} else if strings.Contains(tmpEntityClass, "brigantine") {
-		info.EntitySubType = "Brigantine"
-	} else if strings.Contains(tmpEntityClass, "dinghy") {
-		info.EntitySubType = "Dingy"
-	} else if strings.Contains(tmpEntityClass, "raft") {
-		info.EntitySubType = "Raft"
-	} else if strings.Contains(tmpEntityClass, "sloop") {
-		info.EntitySubType = "Sloop"
-	} else if strings.Contains(tmpEntityClass, "schooner") {
-		info.EntitySubType = "Schooner"
-	} else if strings.Contains(tmpEntityClass, "galleon") {
-		info.EntitySubType = "Galleon"
-	} else {
-		info.EntitySubType = "None"
-	}
-
-	return &info
-}
+*/

@@ -12,3 +12,4 @@ coverage.txt
 mock-local.sh
 /testData/*
 /store/*
+demoData.txt

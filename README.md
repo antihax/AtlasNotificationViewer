@@ -10,13 +10,11 @@ The following environment variables can be set to reconfigure the service:
 
 `STATICDIR` location of static server files. default ./www
 
-`REDIS_ADDRESS` Atlas Redis Address. default is localhost:6379.
+`REDIS_ADDRESS`  Redis Address. default is localhost:6379. NOT YOUR ATLAS REDIS!
 
-`REDIS_PASSWORD` Atlas Redis Password. default is foobared.
+`REDIS_PASSWORD`  Redis Password. default is blank. NOT YOUR ATLAS REDIS!
 
-`REDIS_DB` Atlas Redis DB. default is 0.
-
-`ADMIN_STEAMID` The owners SteamID
+`GLOBAL_ADMIN_STEAMID` The owners SteamID
 
 `WEBHOOK_KEY` Random private string to prevent malicious notifications
 

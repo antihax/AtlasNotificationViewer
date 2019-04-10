@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+
+	"github.com/antihax/AtlasNotifications/mapserver"
 )
 
 func main() {

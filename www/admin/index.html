@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2>User List</h2>
+        <input class="form-control" id="filter" type="text" placeholder="Search..">
+        <br>
+        <table id="userTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th class="center">steamID</th>
+                    <th class="center">Allowed</th>
+                    <th class="center">Admin</th>
+                    <th>Last Logon</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        var listUsers = function () {
+            $.getJSON("/listUsers", function (data) {
+                $("#userTable tbody > tr").remove();
+                console.log(data)
+                Object.keys(data).forEach(function (k) {
+                    let adminToggle = `<label class="switch"><input class="toggleUserCheck" name="admin:${k}" type="checkbox" ${data[k]["admin"] === "1" ? "CHECKED" : ""}><span class="slider round"></span></label>`;
+                    let allowedToggle = `<label class="switch"><input class="toggleUserCheck" name="allowed:${k}" type="checkbox"${data[k]["allowed"] === "1" ? "CHECKED" : ""}><span class="slider round"></span></label>`;
+                    $('#userTable').find('tbody:last').after(
+                        `<tr>
+                            <td class="center">${k}</td>
+                            <td class="center">${allowedToggle}</td>
+                            <td class="center">${adminToggle}</td>
+                            <td>${data[k]["lastLogin"]}</td>
+                        </tr>`
+                    )
+                });
+            }, 'html');
+        };
+
+        listUsers();
+
+        $(document).ready(function () {
+            $('.toggleUserCheck').click(function () {
+                var [change, steamID] = $(this).attr('name').split(':');
+                var value = $(this).prop('checked');
+
+                var res = $.ajax({
+                    type: "GET",
+                    url: `/changeUser?change=${change}&steamID=${steamID}&value=${value ? "1" : "0"}`,
+                    async: false
+                }).responseText;
+                return res == 1 ? true : false;
+            });
+
+            $("#filter").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#userTable tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>
