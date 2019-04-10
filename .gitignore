@@ -1,0 +1,14 @@
+*.ztow
+.externalToolBuilders
+.settings
+.vscode
+secret.yaml
+secrets.yaml
+configuration.sh
+debug
+profile.out
+coverage.txt
+/bin/*
+mock-local.sh
+/testData/*
+/store/*
