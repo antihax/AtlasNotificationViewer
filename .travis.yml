@@ -1,0 +1,13 @@
+sudo: required
+language: go
+go: master
+
+services:
+  - docker
+  - redis
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]
+  - then
+  -   ./build.sh
+  - fi
