@@ -106,16 +106,18 @@ class WorldMap extends React.Component {
           }).addTo(map);
         }
       }).then(d => {
-        L.easyButton('fa-sign-out', function (btn, map) {
-          window.location.href = '/logout';
-        }).addTo(map);
-        if (d.allowed === "1") {
-          connect();
-        }
-        if (d.admin === "1") {
-          L.easyButton('fa-globe', function (btn, map) {
-            window.location.href = '/admin';
+        if (d) {
+          L.easyButton('fa-sign-out', function (btn, map) {
+            window.location.href = '/logout';
           }).addTo(map);
+          if (d.allowed === "1") {
+            connect();
+          }
+          if (d.admin === "1") {
+            L.easyButton('fa-globe', function (btn, map) {
+              window.location.href = '/admin';
+            }).addTo(map);
+          }
         }
       })
       .catch(error => { console.log(error) });
