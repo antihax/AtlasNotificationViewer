@@ -18,6 +18,9 @@ The following environment variables can be set to reconfigure the service:
 
 `WEBHOOK_KEY` Random private string to prevent malicious notifications
 
+`COOKIE_SECRET` Random private string to prevent malicious cookies
+
+
 ### Web App
 The client file "www/config.js" holds some cluster specific information like the grid size.
 ```
