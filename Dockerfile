@@ -6,5 +6,4 @@ ADD www /www
 ADD bin/atlas-mapserver /
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-USER appuser
 ENTRYPOINT ["/atlas-mapserver"]
