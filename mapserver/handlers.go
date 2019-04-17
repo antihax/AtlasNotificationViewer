@@ -21,22 +21,3 @@ func (s *MapServer) getTerritoryURL(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(js)
 }
-
-type atlasWebhook struct {
-	Content string `json:"content"`
-}
-
-func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var t atlasWebhook
-	err := decoder.Decode(&t)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	//lines := strings.Split(t.Content, "\n")
-
-	log.Println(t.Content)
-}

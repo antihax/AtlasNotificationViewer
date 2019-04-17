@@ -138,25 +138,29 @@ class WorldMap extends React.Component {
         setTimeout(function () { connect(); }, 1000);
       };
       ws.onmessage = function (event) {
-        var f = JSON.parse(event.data);
-        let coordReg = /Long: ([0-9.]+) \/ Lat: ([0-9.]+)/;
-        let coords = f.content.match(coordReg);
-        if (coords) {
-          let n = [scaleAtlasToLeaflet(parseFloat(coords[1])), -scaleAtlasToLeaflet(-parseFloat(coords[2]))];
-          console.log(f.content)
-          gj.addData({
-            "type": "Feature",
-            "properties": {
-              "name": f.tribe,
-              "popupContent": f.content,
-              "created": new Date()
-            },
-            "geometry": {
-              "type": "Point",
-              "coordinates": n
-            }
-          }).addTo(map)
-        }
+        event.data.split(/\n/).forEach(function (d) {
+          if (d == "") return;
+
+          var f = JSON.parse(d);
+          let coordReg = /Long: ([0-9.]+) \/ Lat: ([0-9.]+)/;
+          let coords = f.content.match(coordReg);
+          if (coords) {
+            let n = [scaleAtlasToLeaflet(parseFloat(coords[1])), -scaleAtlasToLeaflet(-parseFloat(coords[2]))];
+            console.log(f.content)
+            gj.addData({
+              "type": "Feature",
+              "properties": {
+                "name": f.tribe,
+                "popupContent": f.content,
+                "created": new Date()
+              },
+              "geometry": {
+                "type": "Point",
+                "coordinates": n
+              }
+            }).addTo(map)
+          }
+        });
       };
     }
 
