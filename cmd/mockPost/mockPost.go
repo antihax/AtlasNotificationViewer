@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -50,6 +51,9 @@ func main() {
 			continue
 		}
 
+		b, _ := ioutil.ReadAll(resp.Body)
+		log.Println(string(b))
+		log.Printf("%+v\n", resp)
 		resp.Body.Close()
 	}
 }

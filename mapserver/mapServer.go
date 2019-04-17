@@ -34,11 +34,15 @@ func (s *MapServer) addHandler(uri string, handlerFunc http.HandlerFunc) {
 }
 
 func (s *MapServer) addAuthHandler(uri string, handlerFunc http.HandlerFunc) {
-	http.Handle(uri, s.authenticatedEndpoint(s.logMiddleware(handlerFunc)))
+	http.Handle(uri, s.noCache(s.authenticatedEndpoint(s.logMiddleware(handlerFunc))))
+}
+
+func (s *MapServer) addNoCacheHandler(uri string, handlerFunc http.HandlerFunc) {
+	http.Handle(uri, s.noCache(s.logMiddleware(handlerFunc)))
 }
 
 func (s *MapServer) addAdminHandler(uri string, handlerFunc http.HandlerFunc) {
-	http.Handle(uri, s.adminEndpoint(s.logMiddleware(handlerFunc)))
+	http.Handle(uri, s.noCache(s.adminEndpoint(s.logMiddleware(handlerFunc))))
 }
 
 // Run starts the server processing
@@ -88,7 +92,7 @@ func (s *MapServer) Run() error {
 	if !testAlphaNumeric.MatchString(webhook) {
 		log.Fatal("Webhook key is not valid. Must be alpha numeric")
 	}
-	s.addHandler("/"+webhook, http.HandlerFunc(s.webhookHandler))
+	s.addNoCacheHandler("/"+webhook, http.HandlerFunc(s.webhookHandler))
 
 	go s.eventHub.run()
 	endpoint := fmt.Sprintf("%s:%s", getEnv("HOST", "localhost"), getEnv("PORT", "8000"))

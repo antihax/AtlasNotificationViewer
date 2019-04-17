@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>Bootstrap Example</title>
+    <title>Admin</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
@@ -32,7 +32,6 @@
         var listUsers = function () {
             $.getJSON("/listUsers", function (data) {
                 $("#userTable tbody > tr").remove();
-                console.log(data)
                 Object.keys(data).forEach(function (k) {
                     let adminToggle = `<label class="switch"><input class="toggleUserCheck" name="admin:${k}" type="checkbox" ${data[k]["admin"] === "1" ? "CHECKED" : ""}><span class="slider round"></span></label>`;
                     let allowedToggle = `<label class="switch"><input class="toggleUserCheck" name="allowed:${k}" type="checkbox"${data[k]["allowed"] === "1" ? "CHECKED" : ""}><span class="slider round"></span></label>`;
@@ -51,7 +50,7 @@
         listUsers();
 
         $(document).ready(function () {
-            $('.toggleUserCheck').click(function () {
+            $(document).on('click', '.toggleUserCheck', function () {
                 var [change, steamID] = $(this).attr('name').split(':');
                 var value = $(this).prop('checked');
 
