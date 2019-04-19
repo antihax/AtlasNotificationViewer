@@ -202,9 +202,9 @@ class WorldMap extends React.Component {
       },
 
       _onMouseMove: function (e) {
-        var lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, 2);
-        var lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, 2);
-        var value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
+        var lng =  L.Util.formatNum(scaleLeafletToAtlas(e.latlng.lng), 2);
+        var lat =  L.Util.formatNum(scaleLeafletToAtlas(-e.latlng.lat), 2);
+        var value =  lng + this.options.separator + lat;
         var prefixAndValue = this.options.prefix + ' ' + value;
         this._container.innerHTML = prefixAndValue;
       }
@@ -264,6 +264,10 @@ class App extends React.Component {
 
 function scaleAtlasToLeaflet(e) {
   return (e + 100) * (1.28);
+}
+
+function scaleLeafletToAtlas(e) {
+  return (e / 1.28) - 100;
 }
 
 // Get local URI for requests
