@@ -74,7 +74,7 @@ class WorldMap extends React.Component {
     // Remove features after 5 minutes
     setInterval(function () {
       map.eachLayer(function (layer) {
-        if (layer.feature && new Date - layer.feature.properties.created > 5 * 60 * 1000) {
+        if (layer.feature && new Date - layer.feature.properties.created > 15 * 60 * 1000) {
           map.removeLayer(layer)
         }
       });
