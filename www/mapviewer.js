@@ -69,6 +69,7 @@ class WorldMap extends React.Component {
       crs: L.CRS.Simple,
       layers: [baseLayer],
       zoomControl: false,
+      attributionControl: false,
     })
 
     // Remove features after 5 minutes
@@ -202,8 +203,8 @@ class WorldMap extends React.Component {
       },
 
       _onMouseMove: function (e) {
-        var lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, this.options.numDigits);
-        var lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, this.options.numDigits);
+        var lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, 2);
+        var lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, 2);
         var value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
         var prefixAndValue = this.options.prefix + ' ' + value;
         this._container.innerHTML = prefixAndValue;
