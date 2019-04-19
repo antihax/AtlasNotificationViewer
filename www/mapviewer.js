@@ -51,7 +51,6 @@ class WorldMap extends React.Component {
   }
 
   componentDidMount() {
-
     this.forceTileReload()
     this.timer = setInterval(this.forceTileReload, 15000)
 
@@ -105,14 +104,14 @@ class WorldMap extends React.Component {
         }
       }).then(d => {
         if (d) {
-          L.easyButton('fa-sign-out', function (btn, map) {
+          L.easyButton('fa fa-times fa-lg', function (btn, map) {
             window.location.href = '/logout';
           }).addTo(map);
           if (d.allowed === "1") {
             connect();
           }
           if (d.admin === "1") {
-            L.easyButton('fa-globe', function (btn, map) {
+            L.easyButton('fa fa-globe fa-lg', function (btn, map) {
               window.location.href = '/admin';
             }).addTo(map);
           }
