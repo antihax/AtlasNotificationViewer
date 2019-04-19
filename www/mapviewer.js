@@ -141,6 +141,8 @@ class WorldMap extends React.Component {
           var f = JSON.parse(d);
           let coordReg = /Long: ([0-9.]+) \/ Lat: ([0-9.]+)/;
           let coords = f.content.match(coordReg);
+
+
           if (coords) {
             let n = [scaleAtlasToLeaflet(parseFloat(coords[1])), -scaleAtlasToLeaflet(-parseFloat(coords[2]))];
             console.log(f.content)
@@ -157,6 +159,14 @@ class WorldMap extends React.Component {
               }
             }).addTo(map)
           }
+
+          new Noty({
+            text: f.content,
+            timeout: 10000,
+            layout: 'bottomRight',
+            theme: 'light'
+          }).show();
+
         });
       };
     }
@@ -202,9 +212,9 @@ class WorldMap extends React.Component {
       },
 
       _onMouseMove: function (e) {
-        var lng =  L.Util.formatNum(scaleLeafletToAtlas(e.latlng.lng), 2);
-        var lat =  -L.Util.formatNum(scaleLeafletToAtlas(-e.latlng.lat), 2);
-        var value =  lng + this.options.separator + lat;
+        var lng = L.Util.formatNum(scaleLeafletToAtlas(e.latlng.lng), 2);
+        var lat = -L.Util.formatNum(scaleLeafletToAtlas(-e.latlng.lat), 2);
+        var value = lng + this.options.separator + lat;
         var prefixAndValue = this.options.prefix + ' ' + value;
         this._container.innerHTML = prefixAndValue;
       }
