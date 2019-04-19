@@ -3,12 +3,8 @@ if (!window) {
   const
     React = require("react"),
     ReactDOM = require("react-dom"),
-    L = require("leaflet")
+    L = require("leaflet");
 }
-
-const colors = (
-  "red green yellow blue orange purple cyan magenta lime pink teal lavender brown beige maroon olive coral navy"
-).split(" ")
 
 class WorldMap extends React.Component {
   constructor(props) {
@@ -238,21 +234,6 @@ class WorldMap extends React.Component {
   }
 }
 
-
-function isTribeID(tribeID) {
-  return tribeID > 1000000000 + 50000
-}
-
-function getTribeColor(tribeID) {
-  if (!tribeID)
-    return "black"
-  if (!isTribeID(tribeID))
-    return "grey"
-
-  var idx = tribeID % colors.length
-  return colors[idx]
-}
-
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -261,21 +242,17 @@ class App extends React.Component {
       notification: {},
       entities: {},
       tribes: {},
-      activeTribeColor: "",
       sending: false,
     }
   }
 
   render() {
     const {
-      activeTribeColor,
       notification
     } = this.state
     return (
       <div className="App">
-        <WorldMap
-          color={activeTribeColor}
-        />
+        <WorldMap />
         <div className={"notification " + (notification.type || "hidden")}>
           {notification.msg}
           <button className="close" onClick={() => this.setState({ notification: {} })}>Dismiss</button>
