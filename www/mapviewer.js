@@ -266,6 +266,7 @@ class App extends React.Component {
 function scaleAtlasToLeaflet(e) {
   return (e + 100) * (1.28);
 }
+
 // Get local URI for requests
 function getLocalURI() {
   var loc = window.location, new_uri;
