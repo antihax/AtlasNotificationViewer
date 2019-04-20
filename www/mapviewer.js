@@ -98,7 +98,7 @@ class WorldMap extends React.Component {
         if (response.ok) {
           return response.json();
         } else {
-          L.easyButton('<img src="/sits_02.png">', function (btn, map) {
+          L.easyButton('fab fa-steam-symbol fa-lg', function (btn, map) {
             window.location.href = '/login';
           }).addTo(map);
         }
@@ -112,7 +112,7 @@ class WorldMap extends React.Component {
           }
           if (d.admin === "1") {
             L.easyButton('fa fa-globe fa-lg', function (btn, map) {
-              window.location.href = '/admin';
+              window.location.href = '/admin/';
             }).addTo(map);
           }
         }
@@ -141,7 +141,6 @@ class WorldMap extends React.Component {
           var f = JSON.parse(d);
           let coordReg = /Long: ([0-9.]+) \/ Lat: ([0-9.]+)/;
           let coords = f.content.match(coordReg);
-
 
           if (coords) {
             let n = [scaleAtlasToLeaflet(parseFloat(coords[1])), -scaleAtlasToLeaflet(-parseFloat(coords[2]))];
