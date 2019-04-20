@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 
 	"net/http"
 
@@ -12,20 +13,31 @@ import (
 	gsr "gopkg.in/boj/redistore.v1"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 // MapServer provides administrative services to an Atlas Cluster over http
 type MapServer struct {
 	redisClient  *redis.Client
 	territoryURL string
+	homeURL      string
 	globalAdmin  string
 	store        *gsr.RediStore
 
-	eventHub *Hub
+	passthrough     map[string]map[string]string
+	passthroughLock sync.RWMutex
+
+	eventQueue chan notification
+	eventHub   *Hub
 }
 
 // NewMapServer creates a new server
 func NewMapServer() *MapServer {
 	return &MapServer{
-		eventHub: newHub(),
+		eventHub:    newHub(),
+		eventQueue:  make(chan notification, 1000),
+		passthrough: make(map[string]map[string]string),
 	}
 }
 
@@ -56,6 +68,11 @@ func (s *MapServer) Run() error {
 		Password: getEnv("REDIS_PASSWORD", ""),
 	})
 
+	err := s.loadPassthrough()
+	if err != nil {
+		log.Fatalf("Cannot load passthroughs: %v", err)
+	}
+
 	s.globalAdmin = getEnv("GLOBAL_ADMIN_STEAMID", "")
 	if !testNumeric.MatchString(s.globalAdmin) {
 		log.Fatal("Must have a valid SteamID set in GLOBAL_ADMIN_STEAMID environment variable")
@@ -79,8 +96,14 @@ func (s *MapServer) Run() error {
 	// Setup handlers
 	http.Handle("/", http.FileServer(http.Dir(getEnv("STATIC_DIR", "./www"))))
 
-	s.addHandler("/login", s.loginHandler)
-	s.addHandler("/logout", s.logoutHandler)
+	http.Handle("/admin", s.adminEndpoint(
+		http.FileServer(
+			http.Dir(getEnv("STATIC_DIR", "./www/admin"))),
+	),
+	)
+
+	s.addNoCacheHandler("/login", s.loginHandler)
+	s.addNoCacheHandler("/logout", s.logoutHandler)
 
 	s.addAuthHandler("/account", s.accountHandler)
 	s.addAuthHandler("/events", s.streamEvents)
@@ -88,13 +111,21 @@ func (s *MapServer) Run() error {
 	s.addAdminHandler("/listUsers", s.listUsers)
 	s.addAdminHandler("/changeUser", s.changeUser)
 
+	s.addAdminHandler("/listPassthroughs", s.listPassthrough)
+	s.addAdminHandler("/changePassthrough", s.changePassthrough)
+	s.addAdminHandler("/addPassthrough", s.addPassthrough)
+	s.addAdminHandler("/listEventTypes", s.listEventTypes)
+
 	webhook := getEnv("WEBHOOK_KEY", "")
 	if !testAlphaNumeric.MatchString(webhook) {
 		log.Fatal("Webhook key is not valid. Must be alpha numeric")
 	}
 	s.addNoCacheHandler("/"+webhook, http.HandlerFunc(s.webhookHandler))
 
+	// Run in the background
 	go s.eventHub.run()
+	go s.eventPump()
+
 	endpoint := fmt.Sprintf("%s:%s", getEnv("HOST", "localhost"), getEnv("PORT", "8000"))
 	log.Println("Listening on ", endpoint)
 	return http.ListenAndServe(endpoint, nil)

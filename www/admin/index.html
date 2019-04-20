@@ -13,6 +13,88 @@
 
 <body>
     <div class="container">
+        <h2>Passthroughs</h2>
+        <button onclick="addPassthrough()">Add Passthrough</button>
+        <table id="passthroughTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th class="center">ID</th>
+                    <th class="center">Discord Webhook</th>
+                    <th class="center">Options</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        var events;
+        var init = async function () {
+            const response = await fetch('/listEventTypes');
+            events = await response.json();
+
+            $.getJSON("/listPassthroughs", function (data) {
+                $("#passthroughTable tbody > tr").remove();
+
+                Object.keys(data).forEach(function (k) {
+                    let options = "";
+                    events.forEach(function (e) {
+                        options += `<input class="togglePassthroughCheck" type="checkbox" name="${e}:${k}" ${data[k][e] === "1" ? "CHECKED" : ""}> ${e}<br>`
+                    });
+                    let line = `<tr>
+                            <td class="center">${k}</td>
+                            <td><input class="passthroughURL" size=50 name="url:${k}" value="${data[k]["url"]}"></td>
+                            <td>`
+                        + options +
+                        `</td>
+                        </tr>`
+                    $('#passthroughTable').find('tbody:last').after(line)
+                });
+            }, 'html');
+        };
+
+        init();
+
+        var addPassthrough = function () {
+            $.getJSON("/addPassthrough", function (data) {
+                $('#passthroughTable').find('tbody:last').after(
+                    `<tr>
+                        <td class="center">${data}</td>
+                        <td><input class="passthroughURL" name="url:${data}"></td>
+                        <td></td>
+                    </tr>`
+                )
+            }, 'html');
+        };
+
+        $(document).ready(function () {
+            $(document).on('change', '.passthroughURL', function () {
+                var [change, passid] = $(this).attr('name').split(':');
+                var value = $(this).val();
+
+                var res = $.ajax({
+                    type: "GET",
+                    url: `/changePassthrough?change=${change}&id=${passid}&value=${value}`,
+                    async: false
+                }).responseText;
+                return res == 1 ? true : false;
+            });
+
+            $(document).on('click', '.togglePassthroughCheck', function () {
+                var [change, id] = $(this).attr('name').split(':');
+                var value = $(this).prop('checked');
+
+                var res = $.ajax({
+                    type: "GET",
+                    url: `/changePassthrough?change=${change}&id=${id}&value=${value ? "1" : "0"}`,
+                    async: false
+                }).responseText;
+                return res == 1 ? true : false;
+            });
+        });
+    </script>
+
+    <div class="container">
         <h2>User List</h2>
         <input class="form-control" id="filter" type="text" placeholder="Search..">
         <br>
