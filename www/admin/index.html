@@ -13,6 +13,58 @@
 
 <body>
     <div class="container">
+        <h2>Passthroughs</h2>
+        <table id="passthroughTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th class="center">ID</th>
+                    <th class="center">Discord Webhook</th>
+                    <th class="center">Options</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        var listPassthrough = function () {
+            $.getJSON("/listPassthrough", function (data) {
+                $("#passthroughTable tbody > tr").remove();
+                Object.keys(data).forEach(function (k) {
+                    $('#passthroughTable').find('tbody:last').after(
+                        `<tr>
+                            <td class="center">${k}</td>
+                            <td>${data[k]["url"]}</td>
+                            <td>${data[k]["options"]}</td>
+                        </tr>`
+                    )
+                });
+            }, 'html');
+        };
+
+        listPassthrough();
+
+        $(document).ready(function () {
+            $(document).on('click', '.togglePassthroughCheck', function () {
+                var [change, steamID] = $(this).attr('name').split(':');
+                var value = $(this).prop('checked');
+
+                var res = $.ajax({
+                    type: "GET",
+                    url: `/changePassthrough?change=${change}&steamID=${steamID}&value=${value ? "1" : "0"}`,
+                    async: false
+                }).responseText;
+                return res == 1 ? true : false;
+            });
+
+
+        });
+
+    </script>
+
+
+
+    <div class="container">
         <h2>User List</h2>
         <input class="form-control" id="filter" type="text" placeholder="Search..">
         <br>

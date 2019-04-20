@@ -19,13 +19,15 @@ type MapServer struct {
 	globalAdmin  string
 	store        *gsr.RediStore
 
-	eventHub *Hub
+	eventQueue chan notification
+	eventHub   *Hub
 }
 
 // NewMapServer creates a new server
 func NewMapServer() *MapServer {
 	return &MapServer{
-		eventHub: newHub(),
+		eventHub:   newHub(),
+		eventQueue: make(chan notification, 1000),
 	}
 }
 
@@ -79,8 +81,14 @@ func (s *MapServer) Run() error {
 	// Setup handlers
 	http.Handle("/", http.FileServer(http.Dir(getEnv("STATIC_DIR", "./www"))))
 
-	s.addHandler("/login", s.loginHandler)
-	s.addHandler("/logout", s.logoutHandler)
+	http.Handle("/admin", s.adminEndpoint(
+		http.FileServer(
+			http.Dir(getEnv("STATIC_DIR", "./www/admin"))),
+	),
+	)
+
+	s.addNoCacheHandler("/login", s.loginHandler)
+	s.addNoCacheHandler("/logout", s.logoutHandler)
 
 	s.addAuthHandler("/account", s.accountHandler)
 	s.addAuthHandler("/events", s.streamEvents)
@@ -94,7 +102,10 @@ func (s *MapServer) Run() error {
 	}
 	s.addNoCacheHandler("/"+webhook, http.HandlerFunc(s.webhookHandler))
 
+	// Run in the background
 	go s.eventHub.run()
+	go s.eventPump()
+
 	endpoint := fmt.Sprintf("%s:%s", getEnv("HOST", "localhost"), getEnv("PORT", "8000"))
 	log.Println("Listening on ", endpoint)
 	return http.ListenAndServe(endpoint, nil)

@@ -16,6 +16,9 @@ type notification struct {
 	Time      int64  `json:"time"`
 	AtlasTime string `json:"atlasTine"`
 	Content   string `json:"content"`
+	Event     string `json:"event,omitempty"`
+	Long      string `json:"long,omitempty"`
+	Lat       string `json:"lat,omitempty"`
 }
 
 type atlasWebhook struct {
@@ -66,16 +69,63 @@ func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Encode to JSON
-		json, err := json.Marshal(notification{
+		n := notification{
 			Tribe:     tribe,
 			TribeID:   tribeID,
 			Time:      time.Now().Unix(),
 			AtlasTime: eventMatch[1],
 			Content:   eventMatch[2],
-		})
+			Event:     categorizeEvent(eventMatch[2]),
+		}
+
+		// add event to the queue
+		s.eventQueue <- n
+	}
+}
+
+var eventTypes = []string{
+	"stealing",
+	"settler",
+	"demolish",
+	"claim",
+	"tame",
+	"playerkill",
+	"npc",
+	"info",
+}
+
+func categorizeEvent(e string) string {
+	switch {
+	case regexp.MustCompile(`Company of .* is stealing your `).MatchString(e):
+		return "stealing"
+	case regexp.MustCompile(`has become a settler in your Settlement`).MatchString(e):
+		return "settler"
+	case regexp.MustCompile(`demolished a .* at [A-Z]{1}[0-9]{1} `).MatchString(e):
+		return "demolish"
+	case regexp.MustCompile(`Successfully unclaimed `).MatchString(e):
+		return "claim"
+	case regexp.MustCompile(`Claiming territory at `).MatchString(e):
+		return "claim"
+	case regexp.MustCompile(`Successfully claimed territory at `).MatchString(e):
+		return "claim"
+	case regexp.MustCompile(`Successfully claimed territory at `).MatchString(e):
+		return "tame"
+	case regexp.MustCompile(`Crew member .+? was killed by .+ \\(.+\\)!`).MatchString(e):
+		return "playerkill"
+	case regexp.MustCompile(`\\(Crewmember\\) mutinied`).MatchString(e):
+		return "npc"
+	}
+	return "info"
+}
+
+func (s *MapServer) eventPump() {
+	for {
+		n := <-s.eventQueue
+
+		// Encode to JSON
+		json, err := json.Marshal(n)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Println(err)
 			continue
 		}
 
