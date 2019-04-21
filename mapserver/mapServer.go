@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 
 	"net/http"
 
@@ -19,6 +20,9 @@ type MapServer struct {
 	globalAdmin  string
 	store        *gsr.RediStore
 
+	passthrough     map[int]map[string]string
+	passthroughLock sync.RWMutex
+
 	eventQueue chan notification
 	eventHub   *Hub
 }
@@ -26,8 +30,9 @@ type MapServer struct {
 // NewMapServer creates a new server
 func NewMapServer() *MapServer {
 	return &MapServer{
-		eventHub:   newHub(),
-		eventQueue: make(chan notification, 1000),
+		eventHub:    newHub(),
+		eventQueue:  make(chan notification, 1000),
+		passthrough: make(map[int]map[string]string),
 	}
 }
 
@@ -95,6 +100,11 @@ func (s *MapServer) Run() error {
 
 	s.addAdminHandler("/listUsers", s.listUsers)
 	s.addAdminHandler("/changeUser", s.changeUser)
+
+	s.addAdminHandler("/listPassthroughs", s.listPassthrough)
+	s.addAdminHandler("/changePassthrough", s.changePassthrough)
+	s.addAdminHandler("/addPassthrough", s.addPassthrough)
+	s.addAdminHandler("/listEventTypes", s.listEventTypes)
 
 	webhook := getEnv("WEBHOOK_KEY", "")
 	if !testAlphaNumeric.MatchString(webhook) {

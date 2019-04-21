@@ -14,6 +14,7 @@
 <body>
     <div class="container">
         <h2>Passthroughs</h2>
+        <button onclick="addPassthrough()">Add Passthrough</button>
         <table id="passthroughTable" class="table table-bordered table-striped">
             <thead>
                 <tr>
@@ -27,24 +28,53 @@
     </div>
 
     <script>
-        var listPassthrough = function () {
-            $.getJSON("/listPassthrough", function (data) {
+        var events;
+        var init = async function () {
+            const response = await fetch('/listEventTypes');
+            events = await response.json();
+            console.log(events);
+            
+            $.getJSON("/listPassthroughs", function (data) {
                 $("#passthroughTable tbody > tr").remove();
                 Object.keys(data).forEach(function (k) {
                     $('#passthroughTable').find('tbody:last').after(
                         `<tr>
                             <td class="center">${k}</td>
-                            <td>${data[k]["url"]}</td>
-                            <td>${data[k]["options"]}</td>
+                            <td><input class="passthroughURL" name="url:${k}" value="${data[k]["url"]}"></td>
+                            <td></td>
                         </tr>`
                     )
                 });
             }, 'html');
         };
 
-        listPassthrough();
+        init();
+     
+        var addPassthrough = function () {
+            $.getJSON("/addPassthrough", function (data) {
+                $('#passthroughTable').find('tbody:last').after(
+                    `<tr>
+                        <td class="center">${data}</td>
+                        <td><input class="passthroughURL" name="url:${data}"></td>
+                        <td></td>
+                    </tr>`
+                )
+            }, 'html');
+        };
 
         $(document).ready(function () {
+            $(document).on('change', '.passthroughURL', function () {
+                var [change, passid] = $(this).attr('name').split(':');
+                var value = $(this).val();
+
+                var res = $.ajax({
+                    type: "GET",
+                    url: `/changePassthrough?change=${change}&id=${passid}&value=${value}`,
+                    async: false
+                }).responseText;
+                return res == 1 ? true : false;
+            });
+
             $(document).on('click', '.togglePassthroughCheck', function () {
                 var [change, steamID] = $(this).attr('name').split(':');
                 var value = $(this).prop('checked');
@@ -56,13 +86,8 @@
                 }).responseText;
                 return res == 1 ? true : false;
             });
-
-
         });
-
     </script>
-
-
 
     <div class="container">
         <h2>User List</h2>

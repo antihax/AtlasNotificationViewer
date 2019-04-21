@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 func (s *MapServer) listPassthrough(w http.ResponseWriter, r *http.Request) {
@@ -18,41 +20,81 @@ func (s *MapServer) listPassthrough(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(v)
 }
 
-func (s *MapServer) changePassthrough(w http.ResponseWriter, r *http.Request) {
+func (s *MapServer) listEventTypes(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(eventTypes)
+}
 
-	steamID := r.FormValue("steamID")
+func (s *MapServer) changePassthroughMap(id int, field string, value string) {
+	s.passthroughLock.Lock()
+	if s.passthrough[id] == nil {
+		s.passthrough[id] = make(map[string]string)
+	}
+	s.passthrough[id][field] = value
+	s.passthroughLock.Unlock()
+}
+
+func (s *MapServer) changePassthrough(w http.ResponseWriter, r *http.Request) {
+	id := r.FormValue("id")
 	change := r.FormValue("change")
 	value := r.FormValue("value")
 
 	testNumeric := regexp.MustCompile("^[0-9]+$")
 
 	// Validate user input
-	switch change {
-	case "allowed":
-	case "admin":
-	default:
+	found := false
+	for _, cT := range eventTypes {
+		if change == cT {
+			found = true
+			break
+		}
+	}
+	if !found && change != "url" {
+		http.Error(w, "bad input", http.StatusBadRequest)
+		log.Printf("Type not found")
+		return
+	}
+
+	if !testNumeric.MatchString(id) { // Also tests empty
 		http.Error(w, "bad input", http.StatusBadRequest)
 		return
 	}
 
-	switch value {
-	case "0":
-	case "1":
-	default:
-		http.Error(w, "bad input", http.StatusBadRequest)
-		return
-	}
-
-	if !testNumeric.MatchString(steamID) { // Also tests empty
-		http.Error(w, "bad input", http.StatusBadRequest)
-		return
-	}
-
-	_, err := s.redisClient.HSet("user:"+steamID, change, value).Result()
+	_, err := s.redisClient.HSet("passthrough:"+id, change, value).Result()
 	if err != nil {
-		http.Error(w, "bad input", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(1)
+}
+
+func (s *MapServer) addPassthrough(w http.ResponseWriter, r *http.Request) {
+	hash, err := s.scanHash("passthrough:*", 1000)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	max := 1
+	for key := range hash {
+		split := strings.Split(key, ":")
+		id, err := strconv.Atoi(split[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if max < id {
+			max = id
+		}
+	}
+
+	id := strconv.Itoa(max)
+	_, err = s.redisClient.HSet("passthrough:"+id, "id", id).Result()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(id)
 }
