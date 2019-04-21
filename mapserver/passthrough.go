@@ -9,6 +9,31 @@ import (
 	"strings"
 )
 
+func (s *MapServer) loadPassthrough() error {
+	v, err := s.scanHash("passthrough:*", 2000)
+	if err != nil {
+		return err
+	}
+
+	s.passthroughLock.Lock()
+	for id, keys := range v {
+		for field, value := range keys {
+			if s.passthrough[id] == nil {
+				s.passthrough[id] = make(map[string]string)
+			}
+			s.passthrough[id][field] = value
+		}
+	}
+
+	s.passthroughLock.Unlock()
+	return nil
+}
+
+func (s *MapServer) listEventTypes(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(eventTypes)
+}
+
 func (s *MapServer) listPassthrough(w http.ResponseWriter, r *http.Request) {
 	v, err := s.scanHash("passthrough:*", 2000)
 	if err != nil {
@@ -20,12 +45,7 @@ func (s *MapServer) listPassthrough(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(v)
 }
 
-func (s *MapServer) listEventTypes(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(eventTypes)
-}
-
-func (s *MapServer) changePassthroughMap(id int, field string, value string) {
+func (s *MapServer) changePassthroughMap(id string, field string, value string) {
 	s.passthroughLock.Lock()
 	if s.passthrough[id] == nil {
 		s.passthrough[id] = make(map[string]string)
@@ -65,6 +85,7 @@ func (s *MapServer) changePassthrough(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	s.changePassthroughMap(id, change, value)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(1)
 }
@@ -95,6 +116,7 @@ func (s *MapServer) addPassthrough(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	s.changePassthroughMap(id, "id", id)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(id)
 }

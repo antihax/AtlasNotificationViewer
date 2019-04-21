@@ -20,7 +20,7 @@ type MapServer struct {
 	globalAdmin  string
 	store        *gsr.RediStore
 
-	passthrough     map[int]map[string]string
+	passthrough     map[string]map[string]string
 	passthroughLock sync.RWMutex
 
 	eventQueue chan notification
@@ -32,7 +32,7 @@ func NewMapServer() *MapServer {
 	return &MapServer{
 		eventHub:    newHub(),
 		eventQueue:  make(chan notification, 1000),
-		passthrough: make(map[int]map[string]string),
+		passthrough: make(map[string]map[string]string),
 	}
 }
 
@@ -62,6 +62,11 @@ func (s *MapServer) Run() error {
 		Addr:     getEnv("REDIS_ADDRESS", "localhost:6379"),
 		Password: getEnv("REDIS_PASSWORD", ""),
 	})
+
+	err := s.loadPassthrough()
+	if err != nil {
+		log.Fatalf("Cannot load passthroughs: %v", err)
+	}
 
 	s.globalAdmin = getEnv("GLOBAL_ADMIN_STEAMID", "")
 	if !testNumeric.MatchString(s.globalAdmin) {

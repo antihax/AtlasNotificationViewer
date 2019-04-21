@@ -32,24 +32,29 @@
         var init = async function () {
             const response = await fetch('/listEventTypes');
             events = await response.json();
-            console.log(events);
-            
+
             $.getJSON("/listPassthroughs", function (data) {
                 $("#passthroughTable tbody > tr").remove();
+
                 Object.keys(data).forEach(function (k) {
-                    $('#passthroughTable').find('tbody:last').after(
-                        `<tr>
+                    let options = "";
+                    events.forEach(function (e) {
+                        options += `<input class="togglePassthroughCheck" type="checkbox" name="${e}:${k}" ${data[k][e] === "1" ? "CHECKED" : ""}> ${e}<br>`
+                    });
+                    let line = `<tr>
                             <td class="center">${k}</td>
-                            <td><input class="passthroughURL" name="url:${k}" value="${data[k]["url"]}"></td>
-                            <td></td>
+                            <td><input class="passthroughURL" size=50 name="url:${k}" value="${data[k]["url"]}"></td>
+                            <td>`
+                        + options +
+                        `</td>
                         </tr>`
-                    )
+                    $('#passthroughTable').find('tbody:last').after(line)
                 });
             }, 'html');
         };
 
         init();
-     
+
         var addPassthrough = function () {
             $.getJSON("/addPassthrough", function (data) {
                 $('#passthroughTable').find('tbody:last').after(
@@ -76,12 +81,12 @@
             });
 
             $(document).on('click', '.togglePassthroughCheck', function () {
-                var [change, steamID] = $(this).attr('name').split(':');
+                var [change, id] = $(this).attr('name').split(':');
                 var value = $(this).prop('checked');
 
                 var res = $.ajax({
                     type: "GET",
-                    url: `/changePassthrough?change=${change}&steamID=${steamID}&value=${value ? "1" : "0"}`,
+                    url: `/changePassthrough?change=${change}&id=${id}&value=${value ? "1" : "0"}`,
                     async: false
                 }).responseText;
                 return res == 1 ? true : false;
