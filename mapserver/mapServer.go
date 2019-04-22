@@ -13,10 +13,15 @@ import (
 	gsr "gopkg.in/boj/redistore.v1"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 // MapServer provides administrative services to an Atlas Cluster over http
 type MapServer struct {
 	redisClient  *redis.Client
 	territoryURL string
+	homeURL      string
 	globalAdmin  string
 	store        *gsr.RediStore
 

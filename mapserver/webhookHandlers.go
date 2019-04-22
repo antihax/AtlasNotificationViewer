@@ -1,6 +1,7 @@
 package mapserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -122,6 +123,7 @@ func (s *MapServer) eventPump() {
 	for {
 		n := <-s.eventQueue
 
+		go s.passthroughWebhook(&n)
 		// Encode to JSON
 		json, err := json.Marshal(n)
 		if err != nil {
@@ -131,5 +133,28 @@ func (s *MapServer) eventPump() {
 
 		// Send to valid clients
 		s.eventHub.broadcast <- append(json, byte('\n'))
+	}
+}
+
+type discordWebhooks struct {
+	Content   string `json:"content,omitempty"`
+	Username  string `json:"username,omitempty"`
+	AvatarURL string `json:"avatar_url,omitempty"`
+	TTS       bool   `json:"tts,omitempty"`
+	File      string `json:"file,omitempty"`
+}
+
+func (s *MapServer) passthroughWebhook(n *notification) {
+	s.passthroughLock.RLock()
+	defer s.passthroughLock.RUnlock()
+	for _, pass := range s.passthrough {
+		if pass[n.Event] == "1" {
+			b := new(bytes.Buffer)
+			json.NewEncoder(b).Encode(discordWebhooks{
+				Content:  n.Content,
+				Username: n.Tribe,
+			})
+			http.Post(pass["url"], "application/json", b)
+		}
 	}
 }
