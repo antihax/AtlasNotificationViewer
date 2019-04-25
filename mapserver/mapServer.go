@@ -21,7 +21,7 @@ func init() {
 type MapServer struct {
 	redisClient  *redis.Client
 	territoryURL string
-	homeURL      string
+	ourURL       string
 	globalAdmin  string
 	store        *gsr.RediStore
 
@@ -38,6 +38,7 @@ func NewMapServer() *MapServer {
 		eventHub:    newHub(),
 		eventQueue:  make(chan notification, 1000),
 		passthrough: make(map[string]map[string]string),
+		ourURL:      getEnv("OUR_URL", "http://localhost:8000"),
 	}
 }
 

@@ -332,6 +332,29 @@ Day 155, 22:56:54: Crew member Someone - Lvl 44 was killed by a Shark - Lvl 4!
 `, `**Some Tribe (1234567892)**
 Day 156, 21:54:17: Crew member Someone - Lvl 44 was killed!
 Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
+Day 156, 20:12:13: Someone (Sometribe - Member) - Lvl 52 has become a settler in your Settlement 'Home Place' (N6) [ Longitude: 81.50 / Latitude: 28.37 ]!
 Day 156, 01:29:28: Someone - Lvl 52 destroyed their 'Bed ()')!
 Day 156, 01:32:26: Someone - Lvl 52 destroyed their 'Bed ()')!
 Day 155, 23:49:09: Crew member Someone - Lvl 36 was killed!

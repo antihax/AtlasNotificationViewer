@@ -121,10 +121,23 @@ class WorldMap extends React.Component {
 
     map.setView([-128, 128], 2)
 
-    if (this.props.onContextMenu)
-      map.on("contextmenu.show", this.props.onContextMenu)
-    if (this.props.onContextMenuClose)
-      map.on("contextmenu.hide", this.props.onContextMenuClose)
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('lat')) {
+      let n = [-scaleAtlasToLeaflet(-parseFloat(urlParams.get('lat'))), scaleAtlasToLeaflet(parseFloat(urlParams.get('long')))];
+      L.circleMarker(n, {
+        "radius": 30,
+        "color": '#FF0000',
+      }).addTo(map);
+      L.circleMarker(n, {
+        "radius": 3,
+        "color": '#000',
+        "weight": 4,
+       "fill": true,
+       "fillColor": '#FFFFFF',
+       "fillOpacity": 1
+      }).addTo(map);
+      map.setView(n, 8)
+    }
 
     function connect() {
       var ws = new WebSocket(getLocalURI() + '/events');
@@ -144,7 +157,6 @@ class WorldMap extends React.Component {
 
           if (coords) {
             let n = [scaleAtlasToLeaflet(parseFloat(coords[1])), -scaleAtlasToLeaflet(-parseFloat(coords[2]))];
-            console.log(f.content)
             gj.addData({
               "type": "Feature",
               "properties": {
@@ -213,7 +225,7 @@ class WorldMap extends React.Component {
       _onMouseMove: function (e) {
         var lng = L.Util.formatNum(scaleLeafletToAtlas(e.latlng.lng), 2);
         var lat = -L.Util.formatNum(scaleLeafletToAtlas(-e.latlng.lat), 2);
-        var value = lng + this.options.separator + lat;
+        var value = lng + this.options.separator + lat + " / " + e.latlng.lng + this.options.separator + e.latlng.lat;
         var prefixAndValue = this.options.prefix + ' ' + value;
         this._container.innerHTML = prefixAndValue;
       }

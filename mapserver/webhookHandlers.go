@@ -29,6 +29,7 @@ type atlasWebhook struct {
 func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	reTribe := regexp.MustCompile("^\\*\\*(.+?) \\(([0-9]+)\\)\\*\\*")
 	reEvent := regexp.MustCompile("^(Day .+?): (.+?)$")
+	reCoords := regexp.MustCompile("Long: ([0-9.]+) / Lat: ([0-9.]+)")
 
 	decoder := json.NewDecoder(r.Body)
 	var t atlasWebhook
@@ -62,6 +63,7 @@ func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
 		if event == "" {
 			continue
 		}
+		event = strings.Replace(event, "itude:", ":", -1)
 
 		// Split date from event
 		eventMatch := reEvent.FindStringSubmatch(event)
@@ -79,6 +81,12 @@ func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
 			Event:     categorizeEvent(eventMatch[2]),
 		}
 
+		// Split coords
+		coordsMatch := reCoords.FindStringSubmatch(event)
+		if len(coordsMatch) == 3 {
+			n.Long = coordsMatch[1]
+			n.Lat = coordsMatch[2]
+		}
 		// add event to the queue
 		s.eventQueue <- n
 	}
@@ -97,24 +105,27 @@ var eventTypes = []string{
 
 func categorizeEvent(e string) string {
 	switch {
-	case regexp.MustCompile(`Company of .* is stealing your `).MatchString(e):
-		return "stealing"
+
 	case regexp.MustCompile(`has become a settler in your Settlement`).MatchString(e):
 		return "settler"
 	case regexp.MustCompile(`demolished a .* at [A-Z]{1}[0-9]{1} `).MatchString(e):
 		return "demolish"
 	case regexp.MustCompile(`Successfully unclaimed `).MatchString(e):
 		return "claim"
-	case regexp.MustCompile(`Claiming territory at `).MatchString(e):
-		return "claim"
 	case regexp.MustCompile(`Successfully claimed territory at `).MatchString(e):
 		return "claim"
-	case regexp.MustCompile(`Successfully claimed territory at `).MatchString(e):
-		return "tame"
+	case regexp.MustCompile(`claim .+? lost`).MatchString(e):
+		return "claim"
+	case regexp.MustCompile(`failed to steal territory`).MatchString(e):
+		return "claim"
+	case regexp.MustCompile(` is stealing your territory at`).MatchString(e):
+		return "claim"
 	case regexp.MustCompile(`Crew member .+? was killed by .+ \\(.+\\)!`).MatchString(e):
 		return "playerkill"
 	case regexp.MustCompile(`\\(Crewmember\\) mutinied`).MatchString(e):
 		return "npc"
+	case regexp.MustCompile(` is stealing your `).MatchString(e):
+		return "stealing"
 	}
 	return "info"
 }
@@ -137,11 +148,81 @@ func (s *MapServer) eventPump() {
 }
 
 type discordWebhooks struct {
-	Content   string `json:"content,omitempty"`
-	Username  string `json:"username,omitempty"`
-	AvatarURL string `json:"avatar_url,omitempty"`
-	TTS       bool   `json:"tts,omitempty"`
-	File      string `json:"file,omitempty"`
+	Content   string          `json:"content,omitempty"`
+	Username  string          `json:"username,omitempty"`
+	AvatarURL string          `json:"avatar_url,omitempty"`
+	TTS       bool            `json:"tts,omitempty"`
+	File      string          `json:"file,omitempty"`
+	Embeds    []*MessageEmbed `json:"embeds,omitempty"`
+}
+
+// MessageEmbedFooter is a part of a MessageEmbed struct.
+type MessageEmbedFooter struct {
+	Text         string `json:"text,omitempty"`
+	IconURL      string `json:"icon_url,omitempty"`
+	ProxyIconURL string `json:"proxy_icon_url,omitempty"`
+}
+
+// MessageEmbedImage is a part of a MessageEmbed struct.
+type MessageEmbedImage struct {
+	URL      string `json:"url,omitempty"`
+	ProxyURL string `json:"proxy_url,omitempty"`
+	Width    int    `json:"width,omitempty"`
+	Height   int    `json:"height,omitempty"`
+}
+
+// MessageEmbedThumbnail is a part of a MessageEmbed struct.
+type MessageEmbedThumbnail struct {
+	URL      string `json:"url,omitempty"`
+	ProxyURL string `json:"proxy_url,omitempty"`
+	Width    int    `json:"width,omitempty"`
+	Height   int    `json:"height,omitempty"`
+}
+
+// MessageEmbedVideo is a part of a MessageEmbed struct.
+type MessageEmbedVideo struct {
+	URL      string `json:"url,omitempty"`
+	ProxyURL string `json:"proxy_url,omitempty"`
+	Width    int    `json:"width,omitempty"`
+	Height   int    `json:"height,omitempty"`
+}
+
+// MessageEmbedProvider is a part of a MessageEmbed struct.
+type MessageEmbedProvider struct {
+	URL  string `json:"url,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+// MessageEmbedAuthor is a part of a MessageEmbed struct.
+type MessageEmbedAuthor struct {
+	URL          string `json:"url,omitempty"`
+	Name         string `json:"name,omitempty"`
+	IconURL      string `json:"icon_url,omitempty"`
+	ProxyIconURL string `json:"proxy_icon_url,omitempty"`
+}
+
+// MessageEmbedField is a part of a MessageEmbed struct.
+type MessageEmbedField struct {
+	Name   string `json:"name,omitempty"`
+	Value  string `json:"value,omitempty"`
+	Inline bool   `json:"inline,omitempty"`
+}
+
+// An MessageEmbed stores data for message embeds.
+type MessageEmbed struct {
+	URL         string                 `json:"url,omitempty"`
+	Type        string                 `json:"type,omitempty"`
+	Title       string                 `json:"title,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Timestamp   string                 `json:"timestamp,omitempty"`
+	Color       int                    `json:"color,omitempty"`
+	Footer      *MessageEmbedFooter    `json:"footer,omitempty"`
+	Image       *MessageEmbedImage     `json:"image,omitempty"`
+	Thumbnail   *MessageEmbedThumbnail `json:"thumbnail,omitempty"`
+	Video       *MessageEmbedVideo     `json:"video,omitempty"`
+	Provider    *MessageEmbedProvider  `json:"provider,omitempty"`
+	Author      *MessageEmbedAuthor    `json:"author,omitempty"`
+	Fields      []*MessageEmbedField   `json:"fields,omitempty"`
 }
 
 func (s *MapServer) passthroughWebhook(n *notification) {
@@ -149,11 +230,25 @@ func (s *MapServer) passthroughWebhook(n *notification) {
 	defer s.passthroughLock.RUnlock()
 	for _, pass := range s.passthrough {
 		if pass[n.Event] == "1" {
-			b := new(bytes.Buffer)
-			json.NewEncoder(b).Encode(discordWebhooks{
-				Content:  n.Content,
+			url := s.ourURL
+
+			h := discordWebhooks{
+				Embeds:   []*MessageEmbed{},
 				Username: n.Tribe,
+			}
+			h.Embeds = append(h.Embeds, &MessageEmbed{
+				Title: n.Content,
+				Author: &MessageEmbedAuthor{
+					Name: n.Tribe,
+				},
 			})
+			if n.Lat != "" {
+				url += "?lat=" + n.Lat + "&long=" + n.Long
+				h.Embeds[0].URL = url
+			}
+			b := new(bytes.Buffer)
+
+			json.NewEncoder(b).Encode(h)
 			http.Post(pass["url"], "application/json", b)
 		}
 	}
