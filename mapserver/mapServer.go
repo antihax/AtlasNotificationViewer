@@ -117,6 +117,8 @@ func (s *MapServer) Run() error {
 	s.addAdminHandler("/addPassthrough", s.addPassthrough)
 	s.addAdminHandler("/listEventTypes", s.listEventTypes)
 
+	s.addHandler("/islands", s.getIslands)
+
 	webhook := getEnv("WEBHOOK_KEY", "")
 	if !testAlphaNumeric.MatchString(webhook) {
 		log.Fatal("Webhook key is not valid. Must be alpha numeric")
