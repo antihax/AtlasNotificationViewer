@@ -104,7 +104,6 @@ class WorldMap extends React.Component {
     }
 
     fetch('/islands', {
-      mode: "no-cors",
       dataType: 'json'
     })
       .then(res => res.json())
