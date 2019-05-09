@@ -25,20 +25,29 @@ type MapServer struct {
 	globalAdmin  string
 	store        *gsr.RediStore
 
+	islands       map[int]Island
+	companies     map[int]Company
+	islandPackage IslandPackage
+
 	passthrough     map[string]map[string]string
 	passthroughLock sync.RWMutex
 
 	eventQueue chan notification
 	eventHub   *Hub
+
+	atlasIslands map[int]*AtlasIsland
 }
 
 // NewMapServer creates a new server
 func NewMapServer() *MapServer {
 	return &MapServer{
-		eventHub:    newHub(),
-		eventQueue:  make(chan notification, 1000),
-		passthrough: make(map[string]map[string]string),
-		ourURL:      getEnv("OUR_URL", "http://localhost:8000"),
+		eventHub:     newHub(),
+		eventQueue:   make(chan notification, 1000),
+		passthrough:  make(map[string]map[string]string),
+		ourURL:       getEnv("OUR_URL", "http://localhost:8000"),
+		islands:      make(map[int]Island),
+		companies:    make(map[int]Company),
+		atlasIslands: make(map[int]*AtlasIsland),
 	}
 }
 
@@ -69,7 +78,12 @@ func (s *MapServer) Run() error {
 		Password: getEnv("REDIS_PASSWORD", ""),
 	})
 
-	err := s.loadPassthrough()
+	err := s.loadIslandData()
+	if err != nil {
+		log.Printf("Cannot load Atlas Island Data: %v", err)
+	}
+
+	err = s.loadPassthrough()
 	if err != nil {
 		log.Fatalf("Cannot load passthroughs: %v", err)
 	}
@@ -117,6 +131,8 @@ func (s *MapServer) Run() error {
 	s.addAdminHandler("/addPassthrough", s.addPassthrough)
 	s.addAdminHandler("/listEventTypes", s.listEventTypes)
 
+	// Track and report Islands
+	go s.trackIslandData()
 	s.addHandler("/islands", s.getIslands)
 
 	webhook := getEnv("WEBHOOK_KEY", "")

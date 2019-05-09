@@ -2,7 +2,6 @@ package mapserver
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
@@ -120,29 +119,4 @@ func (s *MapServer) addPassthrough(w http.ResponseWriter, r *http.Request) {
 	s.changePassthroughMap(id, "id", id)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(id)
-}
-
-func (s *MapServer) getIslands(w http.ResponseWriter, r *http.Request) {
-	url := getEnv("ISLANDS_URL", "")
-	if url == "" {
-		http.Error(w, "No island URL configured", http.StatusInternalServerError)
-		return
-	}
-	res, err := http.Get(url)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = w.Write(b)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }

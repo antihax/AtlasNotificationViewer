@@ -101,6 +101,7 @@ var eventTypes = []string{
 	"playerkill",
 	"npc",
 	"info",
+	"territorychange",
 }
 
 func categorizeEvent(e string) string {
