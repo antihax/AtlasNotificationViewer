@@ -49,6 +49,7 @@ class WorldMap extends React.Component {
     }).addTo(map);
 
     map.IslandTerritories = L.layerGroup(layerOpts);
+    map.IslandResources = L.layerGroup(layerOpts);
 
     // Add Layer Control
     L.control.layers({}, {
@@ -57,6 +58,7 @@ class WorldMap extends React.Component {
       Names: L.tileLayer("tiles/names/{z}/{x}/{y}.png", layerOpts),
       Grid: L.tileLayer("tiles/grid/{z}/{x}/{y}.png", layerOpts).addTo(map),
       Territories: map.IslandTerritories.addTo(map),
+      Resources: map.IslandResources,
     }, { position: 'topright' }).addTo(map);
 
     fetch("/account")
@@ -102,6 +104,32 @@ class WorldMap extends React.Component {
         html: labelText
       })
     }
+
+    fetch('/json/islands.json', {
+      dataType: 'json'
+    })
+      .then(res => res.json())
+      .then(function (islands) {
+        for (var k in islands) {
+          if (islands[k].overrides.length > 0) {
+            var circle = new IslandCircle(unrealToLeaflet(islands[k].worldX, islands[k].worldY), {
+              radius: 1.5,
+              color: "#f00",
+              opacity: 0,
+              fillOpacity: 0.1
+            });
+            var html = "";
+            for (var resource in islands[k].overrides) {
+              html += islands[k].overrides[resource] + "<br>";
+            }
+            circle.bindPopup(html, {
+              showOnMouseOver: true
+            });
+            map.IslandResources.addLayer(circle);
+          }
+        }
+      })
+      .catch(error => { console.log(error) });
 
     fetch('/islands', {
       dataType: 'json'
@@ -154,7 +182,6 @@ class WorldMap extends React.Component {
         }
       });
 
-
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('lat')) {
       let n = [-scaleAtlasToLeaflet(-parseFloat(urlParams.get('lat'))), scaleAtlasToLeaflet(parseFloat(urlParams.get('long')))];
@@ -186,7 +213,7 @@ class WorldMap extends React.Component {
           if (d == "") return;
 
           var f = JSON.parse(d);
-          let coordReg = /Long: ([0-9.]+) \/ Lat: ([0-9.]+)/;
+          let coordReg = /Long: ([0-9.-]+) \/ Lat: ([0-9.-]+)/;
           let coords = f.content.match(coordReg);
 
           if (coords) {
@@ -322,7 +349,14 @@ function scaleAtlasToLeaflet(e) {
 }
 
 function scaleLeafletToAtlas(e) {
-  return (e / 1.28) - 100;
+  return (e / 1.28);
+}
+
+function unrealToLeaflet(x, y) {
+  const unreal = 21000000;
+  var lat = ((x / unreal) * 256),
+    long = -((y / unreal) * 256);
+  return [long, lat];
 }
 
 // Get local URI for requests

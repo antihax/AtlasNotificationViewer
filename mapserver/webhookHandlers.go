@@ -29,7 +29,7 @@ type atlasWebhook struct {
 func (s *MapServer) webhookHandler(w http.ResponseWriter, r *http.Request) {
 	reTribe := regexp.MustCompile("^\\*\\*(.+?) \\(([0-9]+)\\)\\*\\*")
 	reEvent := regexp.MustCompile("^(Day .+?): (.+?)$")
-	reCoords := regexp.MustCompile("Long: ([0-9.]+) / Lat: ([0-9.]+)")
+	reCoords := regexp.MustCompile("Long: ([0-9.-]+) / Lat: ([0-9.-]+)")
 
 	decoder := json.NewDecoder(r.Body)
 	var t atlasWebhook
