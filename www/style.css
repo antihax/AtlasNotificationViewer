@@ -118,3 +118,11 @@ ol.History {
     z-index: 99;
     opacity: 0.025;
 }
+
+.split-ul {
+    -webkit-column-count: 3;
+    -moz-column-count: 3;
+    column-count: 3;
+    padding: 0;
+    list-style-type: none;
+}

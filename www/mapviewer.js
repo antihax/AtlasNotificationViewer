@@ -118,12 +118,15 @@ class WorldMap extends React.Component {
               opacity: 0,
               fillOpacity: 0.1
             });
-            var html = "";
+            var html = "<ul class='split-ul'>";
             for (var resource in islands[k].overrides) {
-              html += islands[k].overrides[resource] + "<br>";
+              html += "<li>" +islands[k].overrides[resource] + "</li>";
             }
+            html += "</ul>";
             circle.bindPopup(html, {
-              showOnMouseOver: true
+              showOnMouseOver: true,
+              autoPan: false,
+              keepInView: true,
             });
             map.IslandResources.addLayer(circle);
           }
