@@ -54,11 +54,8 @@ class WorldMap extends React.Component {
     // Add Layer Control
     L.control.layers({}, {
       Islands: L.tileLayer("tiles/islands/{z}/{x}/{y}.png", layerOpts).addTo(map),
-      Discoveries: L.tileLayer("tiles/disco/{z}/{x}/{y}.png", layerOpts),
-      Names: L.tileLayer("tiles/names/{z}/{x}/{y}.png", layerOpts),
       Grid: L.tileLayer("tiles/grid/{z}/{x}/{y}.png", layerOpts).addTo(map),
       Territories: map.IslandTerritories.addTo(map),
-      Resources: map.IslandResources,
     }, { position: 'topright' }).addTo(map);
 
     fetch("/account")
@@ -105,34 +102,7 @@ class WorldMap extends React.Component {
       })
     }
 
-    fetch('/json/islands.json', {
-      dataType: 'json'
-    })
-      .then(res => res.json())
-      .then(function (islands) {
-        for (var k in islands) {
-          if (islands[k].overrides.length > 0) {
-            var circle = new IslandCircle(unrealToLeaflet(islands[k].worldX, islands[k].worldY), {
-              radius: 1.5,
-              color: "#f00",
-              opacity: 0,
-              fillOpacity: 0.1
-            });
-            var html = "<ul class='split-ul'>";
-            for (var resource in islands[k].overrides) {
-              html += "<li>" +islands[k].overrides[resource] + "</li>";
-            }
-            html += "</ul>";
-            circle.bindPopup(html, {
-              showOnMouseOver: true,
-              autoPan: false,
-              keepInView: true,
-            });
-            map.IslandResources.addLayer(circle);
-          }
-        }
-      })
-      .catch(error => { console.log(error) });
+
 
     fetch('/islands', {
       dataType: 'json'

@@ -96,6 +96,7 @@ var eventTypes = []string{
 	"stealing",
 	"settler",
 	"demolish",
+	"enemy",
 	"claim",
 	"tame",
 	"playerkill",
@@ -127,6 +128,10 @@ func categorizeEvent(e string) string {
 		return "npc"
 	case regexp.MustCompile(` is stealing your `).MatchString(e):
 		return "stealing"
+	case regexp.MustCompile(` is stealing your territory at `).MatchString(e):
+		return "enemy"
+	case regexp.MustCompile(` was killed by .+? \(.+?\)!`).MatchString(e):
+		return "enemy"
 	}
 	return "info"
 }
