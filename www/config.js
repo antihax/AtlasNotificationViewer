@@ -1,6 +1,6 @@
 const config = {
-    ServersX: 15,
-    ServersY: 15,
-    Cluster: 2,
+    ServersX: 11,
+    ServersY: 11,
+    Cluster: 3,
     Version: 60,
 }

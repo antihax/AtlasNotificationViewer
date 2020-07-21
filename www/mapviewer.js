@@ -25,7 +25,7 @@ class WorldMap extends React.Component {
       noWrap: true,
     };
 
-    const baseLayer = L.tileLayer("tiles/background/{z}/{x}/{y}.png", layerOpts)
+    const baseLayer = L.tileLayer("tiles/tiles/{z}/{x}/{y}.png", layerOpts)
 
     const map = this.worldMap = L.map("worldmap", {
       crs: L.CRS.Simple,
@@ -325,8 +325,15 @@ function scaleLeafletToAtlas(e) {
   return (e / 1.28);
 }
 
+function GPStoLeaflet(x, y) {
+  var long = (y - 100) * 1.28,
+    lat = (100 + x) * 1.28;
+
+  return [long, lat];
+}
+
 function unrealToLeaflet(x, y) {
-  const unreal = 21000000;
+  const unreal = 15400000;
   var lat = ((x / unreal) * 256),
     long = -((y / unreal) * 256);
   return [long, lat];

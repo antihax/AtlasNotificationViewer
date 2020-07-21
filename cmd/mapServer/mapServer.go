@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/antihax/AtlasNotifications/mapserver"
+	"github.com/antihax/AtlasNotificationViewer/mapserver"
 )
 
 func main() {
