@@ -1,6 +1,7 @@
 package mapserver
 
 import (
+	"context"
 	"strings"
 
 	"github.com/go-redis/redis"
@@ -11,8 +12,8 @@ func (s *MapServer) scanHash(pattern string, maxItems int64) (map[string]map[str
 
 	// [GSG] Scan is slower than Keys but provides gaps for other things to execute
 	var keys []string
-	iter := s.redisClient.Scan(0, pattern, maxItems).Iterator()
-	for iter.Next() {
+	iter := s.redisClient.Scan(context.Background(), 0, pattern, maxItems).Iterator()
+	for iter.Next(context.Background()) {
 		keys = append(keys, iter.Val())
 	}
 
@@ -25,11 +26,11 @@ func (s *MapServer) scanHash(pattern string, maxItems int64) (map[string]map[str
 	results := make(map[string]*redis.StringStringMapCmd)
 	pipe := s.redisClient.Pipeline()
 	for _, id := range keys {
-		results[id] = pipe.HGetAll(id)
+		results[id] = pipe.HGetAll(context.Background(), id)
 	}
 
 	// Execute all requests
-	if _, err := pipe.Exec(); err != nil {
+	if _, err := pipe.Exec(context.Background()); err != nil {
 		return nil, err
 	}
 
