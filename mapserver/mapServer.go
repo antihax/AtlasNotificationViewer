@@ -1,7 +1,6 @@
 package mapserver
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -104,7 +103,7 @@ func (s *MapServer) Run() error {
 	s.store = store
 
 	// Test connection
-	_, err = s.redisClient.Ping(context.Background()).Result()
+	_, err = s.redisClient.Ping().Result()
 	if err != nil {
 		return err
 	}

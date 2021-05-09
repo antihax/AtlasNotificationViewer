@@ -6,6 +6,7 @@ secret.yaml
 secrets.yaml
 configuration.sh
 debug
+__debug_bin
 profile.out
 coverage.txt
 /bin/*
@@ -13,3 +14,4 @@ mock-local.sh
 /testData/*
 /store/*
 demoData.txt
+.vscode

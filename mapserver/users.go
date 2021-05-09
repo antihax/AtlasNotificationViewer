@@ -1,7 +1,6 @@
 package mapserver
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -49,7 +48,7 @@ func (s *MapServer) changeUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := s.redisClient.HSet(context.Background(), "user:"+steamID, change, value).Result()
+	_, err := s.redisClient.HSet("user:"+steamID, change, value).Result()
 	if err != nil {
 		http.Error(w, "bad input", http.StatusInternalServerError)
 		return

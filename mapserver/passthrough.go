@@ -1,7 +1,6 @@
 package mapserver
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -81,7 +80,7 @@ func (s *MapServer) changePassthrough(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := s.redisClient.HSet(context.Background(), "passthrough:"+id, change, value).Result()
+	_, err := s.redisClient.HSet("passthrough:"+id, change, value).Result()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -112,7 +111,7 @@ func (s *MapServer) addPassthrough(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := strconv.Itoa(max)
-	_, err = s.redisClient.HSet(context.Background(), "passthrough:"+id, "id", id).Result()
+	_, err = s.redisClient.HSet("passthrough:"+id, "id", id).Result()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

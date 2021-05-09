@@ -33,7 +33,7 @@ class WorldMap extends React.Component {
       zoomControl: false,
       attributionControl: false,
     })
-
+    map._originalBounds = layerOpts.bounds;
     // Remove features after 5 minutes
     setInterval(function () {
       map.eachLayer(function (layer) {
@@ -53,8 +53,10 @@ class WorldMap extends React.Component {
 
     // Add Layer Control
     L.control.layers({}, {
-      Islands: L.tileLayer("tiles/islands/{z}/{x}/{y}.png", layerOpts).addTo(map),
-      Grid: L.tileLayer("tiles/grid/{z}/{x}/{y}.png", layerOpts).addTo(map),
+      Grid: new L.AtlasGrid({
+        xticks: config.ServersX,
+        yticks: config.ServersY
+      }).addTo(map),
       Territories: map.IslandTerritories.addTo(map),
     }, { position: 'topright' }).addTo(map);
 

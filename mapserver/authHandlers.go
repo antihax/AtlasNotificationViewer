@@ -1,7 +1,6 @@
 package mapserver
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -66,7 +65,7 @@ func (s *MapServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Set last logon
-		_, err = s.redisClient.HSet(context.Background(), "user:"+steamID, "lastLogin", time.Now().Format(time.RFC822)).Result()
+		_, err = s.redisClient.HSet("user:"+steamID, "lastLogin", time.Now().Format(time.RFC822)).Result()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			log.Error(err)
@@ -90,7 +89,7 @@ func (s *MapServer) isAdmin(r *http.Request) bool {
 			return true
 		}
 		if ok {
-			v, err := s.redisClient.HGet(context.Background(), "user:"+steamID, "admin").Result()
+			v, err := s.redisClient.HGet("user:"+steamID, "admin").Result()
 			if err == nil && v == "1" {
 				return true
 			}
@@ -110,7 +109,7 @@ func (s *MapServer) isAuthorized(r *http.Request) bool {
 		return true
 	}
 	if ok {
-		v, err := s.redisClient.HGet(context.Background(), "user:"+steamID, "allowed").Result()
+		v, err := s.redisClient.HGet("user:"+steamID, "allowed").Result()
 		if err == nil && v == "1" {
 			return true
 		}
@@ -128,7 +127,7 @@ func (s *MapServer) accountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v, err := s.redisClient.HGetAll(context.Background(), "user:"+steamID).Result()
+	v, err := s.redisClient.HGetAll("user:" + steamID).Result()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(err)

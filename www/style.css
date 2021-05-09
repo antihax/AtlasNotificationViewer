@@ -2,27 +2,31 @@
     box-sizing: border-box
 }
 
-html, body, #app, .App, #worldmap {
+html,
+body,
+#app,
+.App,
+#worldmap {
     height: 100%;
-    margin: 0;
+    margin: 0
 }
+
 .leaflet-container .leaflet-control-mouseposition {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, .7);
     box-shadow: 0 0 5px #bbb;
     padding: 0 5px;
-    margin:0;
+    margin: 0;
     color: #333;
-    font: 11px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
-  }
-
+    font: 11px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif
+}
 
 ol.Suggestions,
 ol.History {
-    padding-left: 2em;
+    padding-left: 2em
 }
 
 .hidden {
-    display: none;
+    display: none
 }
 
 .notification {
@@ -32,39 +36,39 @@ ol.History {
     width: 80%;
     padding: 1em;
     z-index: 501;
-    box-shadow: 1px 2px 10px black;
+    box-shadow: 1px 2px 10px #000;
     border: 1px solid gray;
-    background-color: #EEEEEE;
-    color: black;
+    background-color: #eee;
+    color: #000
 }
 
 .notification.error {
-    background-color: #FFEAEA;
-    border-color: red;
+    background-color: #ffeaea;
+    border-color: red
 }
 
 .notification button.close {
     position: absolute;
     top: 1em;
-    right: 1em;
+    right: 1em
 }
 
 .info {
     padding: 6px 8px;
     font: 14px/16px Arial, Helvetica, sans-serif;
-    background: white;
-    background: rgba(255,255,255,0.8);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
+    background: #fff;
+    background: rgba(255, 255, 255, .8);
+    box-shadow: 0 0 15px rgba(0, 0, 0, .2);
+    border-radius: 5px
 }
 
 .info h4 {
     margin: 0 0 5px;
-    color: #777;
+    color: #777
 }
 
 .leaflet-container {
-    background: #133146;
+    background: #133146
 }
 
 .legend {
@@ -75,30 +79,33 @@ ol.History {
     padding-right: 3em;
     z-index: 501;
     line-height: 18px;
-    color: #555;
+    color: #555
 }
+
 .legend i {
     width: 18px;
     height: 18px;
     float: left;
     margin-right: 8px;
-    opacity: 0.7;
+    opacity: .7
 }
 
-@font-face{
+@font-face {
     font-family: TitleFont;
-    src: url('fonts/FreebooterUpdated.ttf')
+    src: url(fonts/FreebooterUpdated.ttf)
 }
+
 .titlebar {
-    font-family: 'TitleFont';
+    font-family: titlefont;
     font-size: 2em;
     width: 100%;
     text-align: center;
-    color: #FFFFFF;
-    background-color: #000000;
-    padding: 0.1em;
-    height: 1.56em;
+    color: #fff;
+    background-color: #000;
+    padding: .1em;
+    height: 1.56em
 }
+
 .atlastitlebaricon {
     width: 4em;
     height: 4em;
@@ -106,8 +113,9 @@ ol.History {
     position: fixed;
     vertical-align: top;
     margin-left: -64px;
-    margin-top: -0.8em;
+    margin-top: -.8em
 }
+
 .atlasbackgroundlogo {
     width: 512px;
     height: 512px;
@@ -116,7 +124,7 @@ ol.History {
     bottom: 0;
     right: 0;
     z-index: 99;
-    opacity: 0.025;
+    opacity: .025
 }
 
 .split-ul {
@@ -124,5 +132,104 @@ ol.History {
     -moz-column-count: 3;
     column-count: 3;
     padding: 0;
-    list-style-type: none;
+    list-style-type: none
+}
+
+.leaflet-control-measure {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 21px;
+}
+
+.leaflet-control-pin {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 21px;
+}
+
+.leaflet-bar-part-top-and-bottom {
+    -webkit-border-radius: 4px 4px 4px 4px;
+    border-radius: 4px 4px 4px 4px;
+    border-bottom: none;
+}
+
+.leaflet-touch .leaflet-bar-part-top-and-bottom {
+    -webkit-border-radius: 7px 7px 7px 7px;
+    border-radius: 7px 7px 7px 7px;
+    border-bottom: none;
+}
+
+.leaflet-control-measure-on .leaflet-control-measure {
+    box-shadow: 0 0 8px rgba(10, 10, 10, 1.0);
+}
+
+.leaflet-measure-tooltip {
+    font: 9px/1.25 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 5px #BBB;
+    margin: 0;
+    padding: 2px;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
+}
+
+.leaflet-measure-tooltip-total {
+    font-weight: bold;
+}
+
+.leaflet-measure-tooltip-difference {
+    color: #777;
+}
+
+.leaflet-grid-marker {
+    margin: 0;
+    padding: 0px;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
+}
+
+.leaflet-grid-header {
+    font: 10px/1 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    margin: 0;
+    font-weight: bold;
+    display: inline;
+    vertical-align: top;
+    padding: 0px;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
+    color: white;
+    text-shadow: 2px 2px black;
+}
+
+.leaflet-grid-subheader {
+    font: 10px/1 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    margin: 0;
+    display: inline;
+    font-weight: normal;
+    vertical-align: top;
+    padding: 0px;
+    opacity: 0.6;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
+    color: white;
+    text-shadow: 1px 1px black;
+}
+
+.leaflet-grid-icon {
+    font: 12px/1 "Helvetica Neue", Arial, Helvetica, sans-serif;
+    margin: 0;
+    display: inline;
+    font-weight: normal;
+    vertical-align: top;
+    padding: 0px;
+    opacity: 0.6;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
+    color: white;
+    text-shadow: 1px 1px black;
 }
