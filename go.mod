@@ -11,6 +11,6 @@ require (
 	github.com/prometheus/common v0.23.0
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/solovev/steam_go v0.0.0-20170222182106-48eb5aae6c50
-	golang.org/x/sys v0.0.0-20210507161434-a76c4d0a0096 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/boj/redistore.v1 v1.0.0-20160128113310-fc113767cd6b
 )
